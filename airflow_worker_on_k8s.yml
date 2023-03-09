@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: airflow-worker-pod
+spec:
+  containers:
+    - args: []
+      command: []
+      env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: LocalExecutor
+        # Hard Coded Airflow Envs
+        - name: AIRFLOW__CORE__FERNET_KEY
+          value: ''
+        - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+          #value: sqlite:////root/airflow/airflow.db
+          value: postgresql+psycopg2://airflow:airflow@horton-test0.jumia.local/test3
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: 'True'
+        - name: AIRFLOW__CORE__DAGS_FOLDER
+          value: /opt/airflow/dags
+      resources: 
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+
+      envFrom: []
+      #image: apache/airflow:2.2.0
+      #image: 254810856704.dkr.ecr.eu-central-1.amazonaws.com/airflow:2_2_0_vanilla
+      image: 254810856704.dkr.ecr.eu-central-1.amazonaws.com/airflow:2.2.3-python3.8_vanilla
+      imagePullPolicy: IfNotPresent
+      name: airflow-worker-pod
+      ports: []
+      volumeMounts:
+        - mountPath: "/opt/airflow/logs"
+          name: airflow-logs
+        - mountPath: "/opt/airflow/dags"
+          name: airflow-dags
+        - mountPath: "/root/airflow/airflow.db"
+          name: airflow-db
+  hostNetwork: false
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 50000
+  nodeSelector:
+    runner: dataiku-cpu
+  affinity:
+    {}
+  tolerations:
+    []
+  #serviceAccountName: 'RELEASE-NAME-worker-serviceaccount'
+  volumes:
+  - name: airflow-dags
+    hostPath:
+      path: /opt/airflow/dags
+  - name: airflow-logs
+    hostPath:
+      path: /opt/airflow/logs
+  - name: airflow-db
+    hostPath:
+      path: /root/airflow/airflow.db
